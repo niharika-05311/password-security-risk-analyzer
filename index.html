@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Security Analyzer &amp; Risk Assessment Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scanline"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">◈</span>
+    <div class="brand-text">
+      <span class="brand-title">Password Security Analyzer</span>
+      <span class="brand-sub">Risk Assessment Tool</span>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="analyzer">Analyzer</button>
+    <button class="tab" data-tab="generator">Generator</button>
+    <button class="tab" data-tab="passphrase">Passphrase</button>
+    <button class="tab" data-tab="compare">Compare</button>
+    <button class="tab" data-tab="learn">Learn</button>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <!-- ANALYZER -->
+  <section class="panel active" id="panel-analyzer">
+    <div class="grid">
+
+      <div class="col-main">
+        <div class="card">
+          <h2 class="card-title">Enter a password to analyze</h2>
+          <p class="card-hint">Everything runs locally in this browser tab. Nothing is uploaded, logged, or stored in plaintext.</p>
+
+          <div class="pw-input-row">
+            <input type="password" id="pwInput" class="pw-input" placeholder="Type or paste a password…" autocomplete="off" spellcheck="false" maxlength="256">
+            <button class="icon-btn" id="toggleVisibility" title="Show/hide password" aria-label="Show or hide password">👁</button>
+            <button class="icon-btn" id="clearBtn" title="Clear" aria-label="Clear password">✕</button>
+          </div>
+          <div class="input-meta">
+            <span id="charCount">0 characters</span>
+            <span id="lengthWarning" class="warn-text"></span>
+          </div>
+
+          <div class="score-block">
+            <div class="gauge-wrap">
+              <svg viewBox="0 0 200 120" class="gauge" id="gaugeSvg">
+                <path d="M20,110 A90,90 0 0,1 180,110" class="gauge-track"/>
+                <path d="M20,110 A90,90 0 0,1 180,110" class="gauge-fill" id="gaugeFill"/>
+              </svg>
+              <div class="gauge-readout">
+                <span class="gauge-score" id="scoreNum">0</span>
+                <span class="gauge-max">/100</span>
+              </div>
+            </div>
+            <div class="score-side">
+              <span class="level-badge" id="levelBadge">Very Weak</span>
+              <div class="mini-stat"><span>Entropy</span><strong id="entropyVal">0 bits</strong></div>
+              <div class="mini-stat"><span>Length</span><strong id="lengthVal">0 chars</strong></div>
+              <div class="mini-stat"><span>Char pool</span><strong id="poolVal">0</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title small">Character composition</h3>
+          <div class="checklist" id="charChecklist">
+            <div class="chk" data-ok="false"><span class="chk-icon">–</span> Lowercase letters</div>
+            <div class="chk" data-ok="false"><span class="chk-icon">–</span> Uppercase letters</div>
+            <div class="chk" data-ok="false"><span class="chk-icon">–</span> Numbers</div>
+            <div class="chk" data-ok="false"><span class="chk-icon">–</span> Special characters</div>
+            <div class="chk" data-ok="false"><span class="chk-icon">–</span> 12+ characters (recommended)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title small">Predictability analysis</h3>
+          <p class="card-hint">Detected patterns attackers commonly test for first.</p>
+          <div id="patternList" class="pattern-list">
+            <p class="muted">Start typing to see results.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title small">Common password check</h3>
+          <div id="commonResult" class="status-line muted">No password entered yet.</div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title small">Brute-force resistance estimate</h3>
+          <div id="bruteForceResult" class="bf-block">
+            <span class="bf-category" id="bfCategory">—</span>
+            <span class="bf-combos" id="bfCombos"></span>
+          </div>
+          <p class="card-hint">This is a theoretical estimate for education only. Real attack speed depends on hardware, the hashing algorithm used, rate limiting, and other controls the target system has in place.</p>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title small">Recommendations</h3>
+          <ul class="recs" id="recsList">
+            <li class="muted">Recommendations will appear here.</li>
+          </ul>
+        </div>
+
+        <div class="card collapsible">
+          <button class="collapse-toggle" id="calcToggle">
+            <span>How was this calculated?</span>
+            <span class="chevron">⌄</span>
+          </button>
+          <div class="collapse-body" id="calcBody">
+            <p>Entropy is estimated using <code>E ≈ length × log₂(pool size)</code>, where the pool size is the sum of character categories detected in the password (lowercase 26, uppercase 26, digits 10, symbols ~32). This treats the password as if it were drawn randomly from that pool — real entropy is usually lower for human-chosen passwords, which is why pattern and dictionary checks are scored separately.</p>
+            <p id="calcExample" class="calc-example muted">Type a password above to see the live calculation.</p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="col-side">
+        <div class="card sticky">
+          <h3 class="card-title small">Privacy first</h3>
+          <ul class="privacy-list">
+            <li>Your password is analyzed locally, in this browser tab</li>
+            <li>Nothing is uploaded to a server</li>
+            <li>Nothing is sent to an external API</li>
+            <li>Plaintext passwords are never stored</li>
+          </ul>
+        </div>
+
+        <div class="card sticky">
+          <h3 class="card-title small">Analysis history</h3>
+          <p class="card-hint">Stores score, entropy, length and risk only — never the password itself.</p>
+          <div id="historyList" class="history-list">
+            <p class="muted">No history yet.</p>
+          </div>
+          <button class="ghost-btn" id="clearHistoryBtn">Clear history</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- GENERATOR -->
+  <section class="panel" id="panel-generator">
+    <div class="card">
+      <h2 class="card-title">Secure password generator</h2>
+      <p class="card-hint">Uses <code>crypto.getRandomValues()</code> for cryptographically strong randomness.</p>
+
+      <div class="gen-output-row">
+        <input type="text" id="genOutput" class="pw-input mono" readonly placeholder="Generated password appears here">
+        <button class="icon-btn" id="genCopyBtn" title="Copy">⧉</button>
+      </div>
+
+      <div class="gen-controls">
+        <label class="range-row">
+          <span>Length: <strong id="genLengthLabel">16</strong></span>
+          <input type="range" id="genLength" min="8" max="64" value="16">
+        </label>
+        <div class="toggle-row">
+          <label class="toggle"><input type="checkbox" id="genUpper" checked> Uppercase (A–Z)</label>
+          <label class="toggle"><input type="checkbox" id="genLower" checked> Lowercase (a–z)</label>
+          <label class="toggle"><input type="checkbox" id="genNumbers" checked> Numbers (0–9)</label>
+          <label class="toggle"><input type="checkbox" id="genSymbols" checked> Symbols (!@#$…)</label>
+        </div>
+        <button class="primary-btn" id="genBtn">Generate password</button>
+      </div>
+
+      <div class="gen-result" id="genResult" hidden>
+        <div class="mini-stat"><span>Score</span><strong id="genScore">—</strong></div>
+        <div class="mini-stat"><span>Entropy</span><strong id="genEntropy">—</strong></div>
+        <div class="mini-stat"><span>Level</span><strong id="genLevel">—</strong></div>
+        <button class="ghost-btn" id="genAnalyzeBtn">Analyze in main panel</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PASSPHRASE -->
+  <section class="panel" id="panel-passphrase">
+    <div class="card">
+      <h2 class="card-title">Passphrase generator</h2>
+      <p class="card-hint">Long passphrases can provide strong security while remaining easier to remember, e.g. <code>river-moon-cactus-laptop</code>.</p>
+
+      <div class="gen-output-row">
+        <input type="text" id="passphraseOutput" class="pw-input mono" readonly placeholder="Generated passphrase appears here">
+        <button class="icon-btn" id="passphraseCopyBtn" title="Copy">⧉</button>
+      </div>
+
+      <div class="gen-controls">
+        <label class="range-row">
+          <span>Words: <strong id="wordCountLabel">4</strong></span>
+          <input type="range" id="wordCount" min="3" max="6" value="4">
+        </label>
+        <label class="select-row">
+          <span>Separator</span>
+          <select id="separatorSelect">
+            <option value="-">hyphen ( - )</option>
+            <option value="_">underscore ( _ )</option>
+            <option value=".">dot ( . )</option>
+            <option value=" ">space</option>
+          </select>
+        </label>
+        <button class="primary-btn" id="passphraseBtn">Generate passphrase</button>
+      </div>
+
+      <div class="gen-result" id="passphraseResult" hidden>
+        <div class="mini-stat"><span>Score</span><strong id="passphraseScore">—</strong></div>
+        <div class="mini-stat"><span>Entropy</span><strong id="passphraseEntropy">—</strong></div>
+        <div class="mini-stat"><span>Level</span><strong id="passphraseLevel">—</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="panel" id="panel-compare">
+    <div class="card">
+      <h2 class="card-title">Compare two passwords</h2>
+      <p class="card-hint">Passwords are compared locally and never shown in the results table.</p>
+
+      <div class="compare-inputs">
+        <input type="password" id="pwA" class="pw-input" placeholder="Password A" autocomplete="off">
+        <input type="password" id="pwB" class="pw-input" placeholder="Password B" autocomplete="off">
+      </div>
+      <button class="primary-btn" id="compareBtn">Compare</button>
+
+      <table class="compare-table" id="compareTable" hidden>
+        <thead>
+          <tr><th>Metric</th><th>Password A</th><th>Password B</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Length</td><td id="cmpLenA">–</td><td id="cmpLenB">–</td></tr>
+          <tr><td>Entropy</td><td id="cmpEntA">–</td><td id="cmpEntB">–</td></tr>
+          <tr><td>Score</td><td id="cmpScoreA">–</td><td id="cmpScoreB">–</td></tr>
+          <tr><td>Pattern risk</td><td id="cmpPatA">–</td><td id="cmpPatB">–</td></tr>
+          <tr><td>Overall strength</td><td id="cmpLevelA">–</td><td id="cmpLevelB">–</td></tr>
+        </tbody>
+      </table>
+      <p id="compareVerdict" class="status-line" hidden></p>
+    </div>
+  </section>
+
+  <!-- LEARN -->
+  <section class="panel" id="panel-learn">
+    <div class="card">
+      <h2 class="card-title">Understanding password attacks</h2>
+      <div class="learn-grid">
+        <div class="learn-item">
+          <h4>Brute force attack</h4>
+          <p>Systematically trying every possible combination of characters until the correct password is found. Longer passwords with a larger character pool make this exponentially harder.</p>
+        </div>
+        <div class="learn-item">
+          <h4>Dictionary attack</h4>
+          <p>Trying words from dictionaries and lists of commonly used passwords, rather than random combinations, because most people don't choose truly random passwords.</p>
+        </div>
+        <div class="learn-item">
+          <h4>Credential stuffing</h4>
+          <p>Using username/password pairs leaked from one breached service to try logging into other, unrelated services — exploiting password reuse.</p>
+        </div>
+        <div class="learn-item">
+          <h4>Password spraying</h4>
+          <p>Trying a small number of very common passwords (like "Summer2024!") against many different accounts, to avoid triggering account lockouts.</p>
+        </div>
+        <div class="learn-item">
+          <h4>Rainbow tables</h4>
+          <p>Precomputed tables that map password hashes back to plaintext passwords, letting an attacker reverse a stolen hash quickly instead of guessing from scratch.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>Built as an educational cybersecurity project · Client-side only · No data leaves this browser</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
